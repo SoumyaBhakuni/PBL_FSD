@@ -13,12 +13,10 @@ export default function ProjectDetail() {
   const { id } = useParams();
   const dispatch = useDispatch();
 
-  // Local state for freelancer bidding
   const [bidAmount, setBidAmount] = useState("");
-  const [deliveryDays, setDeliveryDays] = useState(""); // New State
+  const [deliveryDays, setDeliveryDays] = useState("");
   const [proposalText, setProposalText] = useState("");
 
-  // Get state from multiple slices
   const { user } = useSelector((state) => state.auth);
   const { singleProject, loading: projectLoading } = useSelector((state) => state.projects);
   const { proposals, success: acceptSuccess, loading: proposalLoading } = useSelector((state) => state.proposals);
@@ -26,21 +24,24 @@ export default function ProjectDetail() {
   const isOwner = user?.id === singleProject?.client_id;
   const isFreelancer = user?.role === "freelancer";
 
-  // Check if the current freelancer has already bid on this project
-  const hasBidded = proposals.find(p => p.freelancer_id === user?.id);
+  // Check if the current freelancer has already bid on THIS specific project
+  const hasBidded = proposals.find(
+    (p) => p.freelancer_id === user?.id && Number(p.project_id) === Number(id)
+  );
 
+  // --- THE GHOST BID FIX ---
+  // Wipe the proposal state when we enter a new project page
   useEffect(() => {
+    dispatch(resetProposalState()); // Wipes the "Ghost Bid"
     dispatch(fetchSingleProject(id));
   }, [dispatch, id]);
 
-  // Fetch proposals only if the logged-in user is the owner OR a freelancer checking their status
   useEffect(() => {
     if (isOwner || isFreelancer) {
       dispatch(fetchProjectProposals(id));
     }
   }, [dispatch, id, isOwner, isFreelancer]);
 
-  // Handle successful hiring
   useEffect(() => {
     if (acceptSuccess) {
       alert("Hired successfully!");
@@ -60,7 +61,7 @@ export default function ProjectDetail() {
       createProposal({
         project_id: id,
         bid_amount: bidAmount,
-        delivery_days: deliveryDays, // Passed to backend
+        delivery_days: deliveryDays,
         cover_letter: proposalText,
       })
     );
@@ -70,8 +71,7 @@ export default function ProjectDetail() {
       setBidAmount("");
       setDeliveryDays("");
       setProposalText("");
-      dispatch(resetProjectState());
-      if (isFreelancer) dispatch(fetchProjectProposals(id)); 
+      dispatch(fetchProjectProposals(id)); // Fetch fresh proposals to show the green box
     }
   };
 
@@ -272,7 +272,7 @@ export default function ProjectDetail() {
 
               {singleProject?.status === 'completed' && (
                 <div className="text-center p-4 bg-green-50 rounded-xl text-green-700 font-bold border border-green-100">
-                   🏆 Project Finished
+                   Project Finished
                 </div>
               )}
             </div>

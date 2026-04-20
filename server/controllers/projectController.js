@@ -4,37 +4,18 @@ import pool from "../config/db.js";
 // @route   POST /api/projects
 export const createProject = async (req, res) => {
   try {
-    const {
-      title,
-      description,
-      price_min,
-      price_max,
-      skills_required,
-      deadline,
-    } = req.body;
+    const { title, description, price_min, price_max, skills_required, deadline } = req.body;
 
-    // Validation
     if (!title || !description || !price_min || !price_max || !deadline) {
-      return res.status(400).json({
-        message: "Please fill all required fields",
-      });
+      return res.status(400).json({ message: "Please fill all required fields" });
     }
 
-    // Insert with default status 'open'
     const newProject = await pool.query(
       `INSERT INTO projects 
        (title, description, price_min, price_max, skills_required, deadline, client_id, status)
        VALUES ($1, $2, $3, $4, $5, $6, $7, 'open')
        RETURNING *`,
-      [
-        title,
-        description,
-        price_min,
-        price_max,
-        skills_required || null,
-        deadline,
-        req.user.id,
-      ]
+      [title, description, price_min, price_max, skills_required || null, deadline, req.user.id]
     );
 
     res.status(201).json(newProject.rows[0]);
@@ -44,13 +25,12 @@ export const createProject = async (req, res) => {
   }
 };
 
-// @desc    Get projects for the marketplace (Maintained all filters + added status check)
+// @desc    Get projects for the marketplace (With Search & Budget Filters)
 // @route   GET /api/projects
 export const getProjects = async (req, res) => {
   try {
-    const { minBudget, maxBudget, skills, deadline } = req.query;
+    const { search, minBudget, maxBudget, skills, deadline } = req.query;
 
-    // We only want 'open' projects for the public/explore feed
     let query = `
       SELECT p.*, u.name as client_name
       FROM projects p
@@ -61,19 +41,27 @@ export const getProjects = async (req, res) => {
     const values = [];
     let index = 1;
 
-    // Filter by Price Max
+    // --- NEW: Text Search (Matches title or description) ---
+    if (search) {
+      query += ` AND (p.title ILIKE $${index} OR p.description ILIKE $${index})`;
+      values.push(`%${search}%`);
+      index++;
+    }
+
+    // Filter by Min Budget (Ensures project pays AT LEAST this much)
     if (minBudget) {
-      query += ` AND p.price_max >= $${index++}`;
+      query += ` AND p.price_max >= $${index}::numeric`;
       values.push(minBudget);
+      index++;
     }
 
-    // Filter by Price Min
+    // Filter by Max Budget (Ensures project doesn't start HIGHER than this)
     if (maxBudget) {
-      query += ` AND p.price_min <= $${index++}`;
+      query += ` AND p.price_min <= $${index}::numeric`;
       values.push(maxBudget);
+      index++;
     }
 
-    // Advanced Skills Search (Maintained your ILIKE logic)
     if (skills) {
       const skillsArray = skills.split(",").map(s => s.trim());
       skillsArray.forEach((skill) => {
@@ -82,7 +70,6 @@ export const getProjects = async (req, res) => {
       });
     }
 
-    // Filter by Deadline
     if (deadline) {
       query += ` AND p.deadline <= $${index++}`;
       values.push(deadline);
@@ -99,82 +86,60 @@ export const getProjects = async (req, res) => {
 };
 
 // @desc    Get a single project's details
-// @route   GET /api/projects/:id
 export const getSingleProject = async (req, res) => {
   try {
     const { id } = req.params;
-
     const project = await pool.query(
-      `SELECT p.*, u.name as client_name
-       FROM projects p
-       JOIN users u ON p.client_id = u.id
-       WHERE p.id = $1`,
+      `SELECT p.*, u.name as client_name FROM projects p JOIN users u ON p.client_id = u.id WHERE p.id = $1`,
       [id]
     );
-
-    if (project.rows.length === 0) {
-      return res.status(404).json({ message: "Project not found" });
-    }
-
+    if (project.rows.length === 0) return res.status(404).json({ message: "Project not found" });
     res.status(200).json(project.rows[0]);
   } catch (error) {
-    console.error("Get Single Project Error:", error);
     res.status(500).json({ message: "Server Error" });
   }
 };
 
-// @desc    Update project status (Mark as Assigned or Completed)
-// @route   PATCH /api/projects/:id/status
+// @desc    Update project status
 export const updateProjectStatus = async (req, res) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
-
-    // Only the owner (client_id) can change the status
     const result = await pool.query(
       "UPDATE projects SET status = $1 WHERE id = $2 AND client_id = $3 RETURNING *",
       [status, id, req.user.id]
     );
-
-    if (result.rows.length === 0) {
-      return res.status(403).json({ message: "Unauthorized or project not found" });
-    }
-
+    if (result.rows.length === 0) return res.status(403).json({ message: "Unauthorized or project not found" });
     res.status(200).json(result.rows[0]);
   } catch (error) {
-    console.error("Update Project Status Error:", error);
     res.status(500).json({ message: "Server Error" });
   }
 };
 
 // @desc    Get client's projects for Dashboard
-// @route   GET /api/projects/my-projects
 export const getMyProjects = async (req, res) => {
   try {
     const projects = await pool.query(
-      `SELECT * FROM projects 
-       WHERE client_id = $1 
-       ORDER BY created_at DESC`,
+      `SELECT p.*, r.id as review_id, r.rating as review_rating, r.comment as review_comment,
+         u.name as freelancer_name, pr.bid_amount                   
+       FROM projects p 
+       LEFT JOIN reviews r ON r.project_id = p.id
+       LEFT JOIN users u ON p.assigned_to = u.id   
+       LEFT JOIN proposals pr ON pr.project_id = p.id AND pr.status = 'accepted' 
+       WHERE p.client_id = $1 ORDER BY p.created_at DESC`,
       [req.user.id]
     );
-
     res.status(200).json(projects.rows);
   } catch (error) {
-    console.error("Get My Projects Error:", error);
     res.status(500).json({ message: "Server Error" });
   }
 };
 
 // @desc    Get top 3 projects for the Trending Sidebar
-// @route   GET /api/projects/trending
 export const getTrendingProjects = async (req, res) => {
   try {
     const trending = await pool.query(
-      `SELECT id, title, price_max, skills_required 
-       FROM projects 
-       WHERE status = 'open' 
-       ORDER BY created_at DESC 
-       LIMIT 3`
+      `SELECT id, title, price_max, skills_required FROM projects WHERE status = 'open' ORDER BY created_at DESC LIMIT 3`
     );
     res.status(200).json(trending.rows);
   } catch (error) {

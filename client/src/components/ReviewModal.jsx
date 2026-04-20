@@ -1,44 +1,52 @@
-import React, { useState } from "react";
-import axios from "axios";
-import { useSelector } from "react-redux";
+import React, { useState, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { submitReview } from "../features/reviewSlice";
 
 export default function ReviewModal({ isOpen, onClose, project, onReviewSuccess }) {
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-  const { token } = useSelector((state) => state.auth);
+  
+  const dispatch = useDispatch();
+  const { loading: submitting } = useSelector((state) => state.reviews);
+
+  // PRE-FILL DATA FOR "EDIT REVIEW"
+  useEffect(() => {
+    if (project && project.review_id) {
+      setRating(project.review_rating);
+      setComment(project.review_comment);
+    } else {
+      setRating(0);
+      setComment("");
+    }
+  }, [project, isOpen]);
 
   if (!isOpen || !project) return null;
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     if (rating === 0) return alert("Please select a star rating!");
 
-    setSubmitting(true);
-    try {
-      await axios.post(
-        "http://localhost:5000/api/reviews",
-        {
-          project_id: project.id,
-          reviewee_id: project.assigned_to, // Crucial: This links to the freelancer
-          rating,
-          comment,
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      onReviewSuccess();
-      onClose();
-    } catch (err) {
-      alert(err.response?.data?.message || "Error submitting review");
-    } finally {
-      setSubmitting(false);
-    }
+    dispatch(submitReview({
+      project_id: project.id,
+      reviewee_id: project.assigned_to, 
+      rating,
+      comment,
+    })).then((result) => {
+      if (!result.error) {
+        onReviewSuccess();
+        onClose();
+      } else {
+        alert(result.payload || "Error submitting review");
+      }
+    });
   };
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
       <div className="bg-white rounded-3xl w-full max-w-md p-8 shadow-2xl">
-        <h2 className="text-2xl font-black text-gray-900 mb-2">Review Freelancer</h2>
+        <h2 className="text-2xl font-black text-gray-900 mb-2">
+          {project.review_id ? "Edit Your Review" : "Review Freelancer"}
+        </h2>
         <p className="text-gray-500 text-sm mb-6">
           Share your experience regarding <span className="font-bold text-indigo-600">{project.title}</span>.
         </p>
@@ -77,7 +85,7 @@ export default function ReviewModal({ isOpen, onClose, project, onReviewSuccess 
               disabled={submitting}
               className="flex-1 py-3 bg-indigo-600 text-white text-sm font-black rounded-xl hover:bg-indigo-700 transition-all disabled:opacity-50"
             >
-              {submitting ? "Saving..." : "Submit Review"}
+              {submitting ? "Saving..." : project.review_id ? "Update Review" : "Submit Review"}
             </button>
           </div>
         </form>

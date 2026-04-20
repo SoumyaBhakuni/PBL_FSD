@@ -33,6 +33,11 @@ export const fetchProjects = createAsyncThunk(
   async (filters = {}, { rejectWithValue }) => {
     try {
       const queryParams = new URLSearchParams();
+      
+      // --- ADDED SEARCH HERE ---
+      if (filters.search) queryParams.append("search", filters.search);
+      // -------------------------
+      
       if (filters.minBudget) queryParams.append("minBudget", filters.minBudget);
       if (filters.maxBudget) queryParams.append("maxBudget", filters.maxBudget);
       if (filters.skills) queryParams.append("skills", filters.skills);
@@ -195,7 +200,6 @@ const projectSlice = createSlice({
       .addCase(updateProjectStatus.fulfilled, (state, action) => {
         state.loading = false;
         state.success = true;
-        // Update the project in the list if it exists there
         const index = state.myProjects.findIndex(p => p.id === action.payload.id);
         if (index !== -1) state.myProjects[index] = action.payload;
         if (state.singleProject?.id === action.payload.id) state.singleProject = action.payload;
