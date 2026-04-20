@@ -34,13 +34,11 @@ const __dirname = path.dirname(__filename);
 // This line tells Express: "If anyone asks for /uploads, look in the /uploads folder"
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// --- MIDDLEWARE ---
-app.use(
-  cors({
-    origin: "*",
-    credentials: true,
-  })
-);
+app.use(cors({
+  origin: '*', // Allows all origins
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
 app.use(express.json());
 
