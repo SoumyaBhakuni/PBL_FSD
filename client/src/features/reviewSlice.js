@@ -24,7 +24,7 @@ export const fetchUserReviews = createAsyncThunk(
   "reviews/fetchUserReviews",
   async (userId, thunkAPI) => {
     try {
-      const res = await API.get(`http://localhost:5000/api/reviews/freelancer/${userId}`);
+      const res = await API.get(`/api/reviews/freelancer/${userId}`);
       return res.data;
     } catch (error) {
       return thunkAPI.rejectWithValue(

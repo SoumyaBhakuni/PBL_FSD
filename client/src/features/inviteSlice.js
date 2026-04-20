@@ -68,7 +68,7 @@ export const updateInviteStatus = createAsyncThunk(
     try {
       const token = localStorage.getItem("token");
       const response = await API.patch(
-        `http://localhost:5000/api/invites/${inviteId}/status`,
+        `/api/invites/${inviteId}/status`,
         { status },
         { headers: { Authorization: `Bearer ${token}` } }
       );

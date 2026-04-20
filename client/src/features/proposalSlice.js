@@ -42,7 +42,7 @@ export const fetchProjectProposals = createAsyncThunk(
     try {
       const token = localStorage.getItem("token");
       const response = await API.get(
-        `http://localhost:5000/api/proposals/projects/${projectId}`,
+        `/api/proposals/projects/${projectId}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -65,7 +65,7 @@ export const acceptProposal = createAsyncThunk(
     try {
       const token = localStorage.getItem("token");
       const response = await API.patch(
-        `http://localhost:5000/api/proposals/${proposalId}/accept`,
+        `/api/proposals/${proposalId}/accept`,
         {},
         {
           headers: { Authorization: `Bearer ${token}` },

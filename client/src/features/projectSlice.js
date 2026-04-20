@@ -44,7 +44,7 @@ export const fetchProjects = createAsyncThunk(
       if (filters.deadline) queryParams.append("deadline", filters.deadline);
 
       const response = await API.get(
-        `http://localhost:5000/api/projects?${queryParams.toString()}`
+        `/api/projects?${queryParams.toString()}`
       );
       return response.data;
     } catch (error) {
@@ -63,7 +63,7 @@ export const fetchSingleProject = createAsyncThunk(
   async (id, { rejectWithValue }) => {
     try {
       const response = await API.get(
-        `http://localhost:5000/api/projects/${id}`
+        `/api/projects/${id}`
       );
       return response.data;
     } catch (error) {
@@ -83,7 +83,7 @@ export const updateProjectStatus = createAsyncThunk(
     try {
       const token = localStorage.getItem("token");
       const response = await API.patch(
-        `http://localhost:5000/api/projects/${id}/status`,
+        `/api/projects/${id}/status`,
         { status },
         { headers: { Authorization: `Bearer ${token}` } }
       );

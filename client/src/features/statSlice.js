@@ -8,7 +8,7 @@ export const fetchClientStats = createAsyncThunk(
     try {
       const token = thunkAPI.getState().auth.token || localStorage.getItem("token");
       const res = await API.get(
-        `http://localhost:5000/api/users/stats/client?timeframe=${timeframe}`,
+        `/api/users/stats/client?timeframe=${timeframe}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       return res.data;

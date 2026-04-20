@@ -19,7 +19,9 @@ export default function Explore() {
   const { user, isAuthenticated, token } = useSelector((state) => state.auth);
 
   const trendingProjects = projects.slice(0, 3);
-  const API_BASE = "http://localhost:5000"; // Hardcoded for Vite safety
+  
+  // ✅ API_BASE IS REMOVED. 
+  // The base URL is now managed entirely within the 'API' helper.
 
   useEffect(() => {
     dispatch(fetchPosts());
@@ -39,7 +41,8 @@ export default function Explore() {
     }
 
     try {
-      const res = await API.get(`${API_BASE}/api/posts/${postId}/comments`);
+      // ✅ Updated: Removed ${API_BASE}
+      const res = await API.get(`/api/posts/${postId}/comments`);
       setActiveComments({ ...activeComments, [postId]: res.data });
     } catch (err) {
       console.error("Failed to fetch comments", err);
@@ -51,8 +54,9 @@ export default function Explore() {
     if (!content || !content.trim()) return;
 
     try {
+      // ✅ Updated: Removed ${API_BASE}
       const res = await API.post(
-        `${API_BASE}/api/posts/${postId}/comments`,
+        `/api/posts/${postId}/comments`,
         { content },
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -74,18 +78,23 @@ export default function Explore() {
       const files = typeof mediaString === 'string' ? JSON.parse(mediaString) : mediaString;
       if (!Array.isArray(files) || files.length === 0) return null;
 
+      // Note: For media URLs (images/videos), we still need the actual domain 
+      // because <img src> doesn't use our Axios instance. 
+      // We can grab it directly from the env.
+      const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
       return (
         <div className={`mt-4 grid gap-2 ${files.length > 1 ? 'grid-cols-2' : 'grid-cols-1'}`}>
           {files.map((file, idx) => (
             <div key={idx} className={`rounded-xl overflow-hidden border border-gray-100 bg-gray-50 ${files.length === 1 ? 'max-h-[500px]' : 'aspect-square'}`}>
               {file.type === 'video' ? (
-                <video src={`${API_BASE}${file.url}`} controls className="w-full h-full object-cover" />
+                <video src={`${BASE_URL}${file.url}`} controls className="w-full h-full object-cover" />
               ) : (
                 <img 
-                  src={`${API_BASE}${file.url}`} 
+                  src={`${BASE_URL}${file.url}`} 
                   alt="post content" 
                   className="w-full h-full object-cover hover:scale-105 transition-transform duration-500 cursor-pointer"
-                  onClick={() => window.open(`${API_BASE}${file.url}`, '_blank')}
+                  onClick={() => window.open(`${BASE_URL}${file.url}`, '_blank')}
                 />
               )}
             </div>
