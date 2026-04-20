@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import axios from "axios";
+import API from "../api";
 
 /* ================================
    CREATE PROJECT (Client)
@@ -9,8 +9,8 @@ export const createProject = createAsyncThunk(
   async (projectData, { rejectWithValue }) => {
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.post(
-        "http://localhost:5000/api/projects",
+      const response = await API.post(
+        "api/projects",
         projectData,
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -43,7 +43,7 @@ export const fetchProjects = createAsyncThunk(
       if (filters.skills) queryParams.append("skills", filters.skills);
       if (filters.deadline) queryParams.append("deadline", filters.deadline);
 
-      const response = await axios.get(
+      const response = await API.get(
         `http://localhost:5000/api/projects?${queryParams.toString()}`
       );
       return response.data;
@@ -62,7 +62,7 @@ export const fetchSingleProject = createAsyncThunk(
   "projects/fetchSingleProject",
   async (id, { rejectWithValue }) => {
     try {
-      const response = await axios.get(
+      const response = await API.get(
         `http://localhost:5000/api/projects/${id}`
       );
       return response.data;
@@ -82,7 +82,7 @@ export const updateProjectStatus = createAsyncThunk(
   async ({ id, status }, thunkAPI) => {
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.patch(
+      const response = await API.patch(
         `http://localhost:5000/api/projects/${id}/status`,
         { status },
         { headers: { Authorization: `Bearer ${token}` } }
@@ -104,8 +104,8 @@ export const fetchMyProjects = createAsyncThunk(
   async (_, thunkAPI) => {
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.get(
-        "http://localhost:5000/api/projects/my-projects",
+      const response = await API.get(
+        "api/projects/my-projects",
         {
           headers: { Authorization: `Bearer ${token}` },
         }

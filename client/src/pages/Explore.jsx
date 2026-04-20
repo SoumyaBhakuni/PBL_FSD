@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { fetchPosts, toggleLikePost } from "../features/postSlice";
 import { fetchProjects } from "../features/projectSlice";
 import CreatePostModal from "../components/CreatePostModal";
-import axios from "axios";
+import API from "../api";
 
 export default function Explore() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -39,7 +39,7 @@ export default function Explore() {
     }
 
     try {
-      const res = await axios.get(`${API_BASE}/api/posts/${postId}/comments`);
+      const res = await API.get(`${API_BASE}/api/posts/${postId}/comments`);
       setActiveComments({ ...activeComments, [postId]: res.data });
     } catch (err) {
       console.error("Failed to fetch comments", err);
@@ -51,7 +51,7 @@ export default function Explore() {
     if (!content || !content.trim()) return;
 
     try {
-      const res = await axios.post(
+      const res = await API.post(
         `${API_BASE}/api/posts/${postId}/comments`,
         { content },
         { headers: { Authorization: `Bearer ${token}` } }

@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import axios from "axios";
+import API from "../api";
 
 // Thunk to submit a review (Requires auth)
 export const submitReview = createAsyncThunk(
@@ -7,7 +7,7 @@ export const submitReview = createAsyncThunk(
   async (reviewData, thunkAPI) => {
     try {
       const token = thunkAPI.getState().auth.token || localStorage.getItem("token");
-      const res = await axios.post("http://localhost:5000/api/reviews", reviewData, {
+      const res = await API.post("api/reviews", reviewData, {
         headers: { Authorization: `Bearer ${token}` },
       });
       return res.data;
@@ -24,7 +24,7 @@ export const fetchUserReviews = createAsyncThunk(
   "reviews/fetchUserReviews",
   async (userId, thunkAPI) => {
     try {
-      const res = await axios.get(`http://localhost:5000/api/reviews/freelancer/${userId}`);
+      const res = await API.get(`http://localhost:5000/api/reviews/freelancer/${userId}`);
       return res.data;
     } catch (error) {
       return thunkAPI.rejectWithValue(

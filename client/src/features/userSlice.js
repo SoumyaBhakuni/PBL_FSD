@@ -1,17 +1,17 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import axios from "axios";
+import API from "../api";
 
 export const fetchFreelancers = createAsyncThunk("users/fetchFreelancers", async (_, thunkAPI) => {
   const token = thunkAPI.getState().auth.token;
   const config = { headers: { Authorization: `Bearer ${token}` } };
-  const response = await axios.get("http://localhost:5000/api/users/freelancers", config);
+  const response = await API.get("api/users/freelancers", config);
   return response.data;
 });
 
 export const fetchSingleUser = createAsyncThunk("users/fetchSingle", async (id, thunkAPI) => {
   const token = thunkAPI.getState().auth.token;
   const config = { headers: { Authorization: `Bearer ${token}` } };
-  const response = await axios.get(`http://localhost:5000/api/users/profile/${id}`, config);
+  const response = await API.get(`http://localhost:5000/api/users/profile/${id}`, config);
   return response.data;
 });
 

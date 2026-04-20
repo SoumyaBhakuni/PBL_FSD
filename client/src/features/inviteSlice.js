@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import axios from "axios";
+import API from "../api";
 
 const initialState = {
   sentInvites: [],       // For Client Dashboard
@@ -15,8 +15,8 @@ export const sendInvite = createAsyncThunk(
   async (inviteData, thunkAPI) => {
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.post(
-        "http://localhost:5000/api/invites",
+      const response = await API.post(
+        "api/invites",
         inviteData,
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -35,7 +35,7 @@ export const fetchClientInvites = createAsyncThunk(
   async (_, thunkAPI) => {
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.get("http://localhost:5000/api/invites/client", {
+      const response = await API.get("api/invites/client", {
         headers: { Authorization: `Bearer ${token}` },
       });
       return response.data;
@@ -51,7 +51,7 @@ export const fetchFreelancerInvites = createAsyncThunk(
   async (_, thunkAPI) => {
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.get("http://localhost:5000/api/invites/freelancer", {
+      const response = await API.get("api/invites/freelancer", {
         headers: { Authorization: `Bearer ${token}` },
       });
       return response.data;
@@ -67,7 +67,7 @@ export const updateInviteStatus = createAsyncThunk(
   async ({ inviteId, status }, thunkAPI) => {
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.patch(
+      const response = await API.patch(
         `http://localhost:5000/api/invites/${inviteId}/status`,
         { status },
         { headers: { Authorization: `Bearer ${token}` } }

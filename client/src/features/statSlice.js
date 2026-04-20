@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import axios from "axios";
+import API from "../api";
 
 // Thunk for Client Dashboard Stats
 export const fetchClientStats = createAsyncThunk(
@@ -7,7 +7,7 @@ export const fetchClientStats = createAsyncThunk(
   async (timeframe = 'monthly', thunkAPI) => {
     try {
       const token = thunkAPI.getState().auth.token || localStorage.getItem("token");
-      const res = await axios.get(
+      const res = await API.get(
         `http://localhost:5000/api/users/stats/client?timeframe=${timeframe}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -26,7 +26,7 @@ export const fetchFreelancerStats = createAsyncThunk(
   async (_, thunkAPI) => {
     try {
       const token = thunkAPI.getState().auth.token || localStorage.getItem("token");
-      const res = await axios.get("http://localhost:5000/api/users/stats/freelancer", {
+      const res = await API.get("api/users/stats/freelancer", {
         headers: { Authorization: `Bearer ${token}` },
       });
       return res.data;

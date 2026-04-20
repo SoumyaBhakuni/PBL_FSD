@@ -1,14 +1,14 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import axios from "axios";
+import API from "../api";
 
-const API_URL = "http://localhost:5000/api/posts";
+const API_URL = "api/posts";
 
 // 1. FETCH POSTS (Updated to pass token so backend knows if "I" liked them)
 export const fetchPosts = createAsyncThunk("posts/fetch", async (_, thunkAPI) => {
   try {
     const token = thunkAPI.getState().auth.token;
     const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
-    const response = await axios.get(API_URL, config);
+    const response = await API.get(API_URL, config);
     return response.data;
   } catch (error) {
     return thunkAPI.rejectWithValue(error.response?.data?.message || "Fetch failed");
@@ -24,7 +24,7 @@ export const addPost = createAsyncThunk("posts/add", async (formData, thunkAPI) 
         Authorization: `Bearer ${token}`,
       } 
     };
-    const response = await axios.post(API_URL, formData, config);
+    const response = await API.post(API_URL, formData, config);
     return response.data;
   } catch (error) {
     return thunkAPI.rejectWithValue(error.response?.data?.message || "Upload failed");
@@ -35,7 +35,7 @@ export const addPost = createAsyncThunk("posts/add", async (formData, thunkAPI) 
 export const toggleLikePost = createAsyncThunk("posts/toggleLike", async (postId, thunkAPI) => {
   try {
     const token = thunkAPI.getState().auth.token;
-    const response = await axios.post(`${API_URL}/${postId}/like`, {}, {
+    const response = await API.post(`${API_URL}/${postId}/like`, {}, {
       headers: { Authorization: `Bearer ${token}` }
     });
     // The backend returns { liked: true } or { liked: false }

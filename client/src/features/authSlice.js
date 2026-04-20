@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import axios from "axios";
+import API from "../api";
 
 //Initial State
 
@@ -21,8 +21,8 @@ export const signupUser = createAsyncThunk(
   "auth/signupUser",
   async (userData, thunkAPI) => {
     try {
-      const response = await axios.post(
-        "http://localhost:5000/api/auth/signup",
+      const response = await API.post(
+        "/api/auth/signup",
         userData
       );
 
@@ -41,8 +41,8 @@ export const loginUser = createAsyncThunk(
   "auth/loginUser",
   async (userData, thunkAPI) => {
     try {
-      const response = await axios.post(
-        "http://localhost:5000/api/auth/login",
+      const response = await API.post(
+        "api/auth/login",
         userData
       );
 
@@ -67,8 +67,8 @@ export const loadUser = createAsyncThunk(
         return thunkAPI.rejectWithValue("No token found");
       }
 
-      const response = await axios.get(
-        "http://localhost:5000/api/auth/me",
+      const response = await API.get(
+        "api/auth/me",
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -91,8 +91,8 @@ export const updateUserProfile = createAsyncThunk(
   async (userData, thunkAPI) => {
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.put(
-        "http://localhost:5000/api/auth/profile",
+      const response = await API.put(
+        "api/auth/profile",
         userData,
         {
           headers: {

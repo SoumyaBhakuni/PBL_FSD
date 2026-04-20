@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import axios from "axios";
+import API from "../api";
 
 const initialState = {
   proposals: [],       // Proposals for a specific project (Client view)
@@ -17,8 +17,8 @@ export const createProposal = createAsyncThunk(
   async (proposalData, thunkAPI) => {
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.post(
-        "http://localhost:5000/api/proposals",
+      const response = await API.post(
+        "api/proposals",
         proposalData,
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -41,7 +41,7 @@ export const fetchProjectProposals = createAsyncThunk(
   async (projectId, thunkAPI) => {
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.get(
+      const response = await API.get(
         `http://localhost:5000/api/proposals/projects/${projectId}`,
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -64,7 +64,7 @@ export const acceptProposal = createAsyncThunk(
   async (proposalId, thunkAPI) => {
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.patch(
+      const response = await API.patch(
         `http://localhost:5000/api/proposals/${proposalId}/accept`,
         {},
         {
@@ -88,8 +88,8 @@ export const fetchMyProposals = createAsyncThunk(
   async (_, thunkAPI) => {
     try {
       const token = localStorage.getItem("token");
-      const response = await axios.get(
-        "http://localhost:5000/api/proposals/my-proposals",
+      const response = await API.get(
+        "api/proposals/my-proposals",
         {
           headers: { Authorization: `Bearer ${token}` },
         }
