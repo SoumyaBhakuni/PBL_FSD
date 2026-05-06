@@ -103,7 +103,7 @@ export default function Navbar() {
       {/* Render the Modal outside the Nav flow so z-index works cleanly */}
       <CreatePostModal 
         isOpen={isPostModalOpen} 
-        onClose={() => setIsPostModalOpen(false)} 
+        setIsOpen={setIsPostModalOpen} // Changed from onClose to setIsOpen
       />
     </>
   );

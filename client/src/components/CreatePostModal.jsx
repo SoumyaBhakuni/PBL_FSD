@@ -1,7 +1,13 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { addPost } from "../features/postSlice"; // Ensure this handles FormData
+import { addPost } from "../features/postSlice";
 
+/**
+ * CreatePostModal Component
+ * Handles multi-part form data (text + media) and UI state machine transitions.
+ * @param {boolean} isOpen - Controls visibility from parent.
+ * @param {function} setIsOpen - Setter function from parent's useState hook.
+ */
 export default function CreatePostModal({ isOpen, setIsOpen }) {
   const [content, setContent] = useState("");
   const [selectedFiles, setSelectedFiles] = useState([]);
@@ -11,66 +17,93 @@ export default function CreatePostModal({ isOpen, setIsOpen }) {
   const { loading } = useSelector((state) => state.posts);
   const dispatch = useDispatch();
 
+  // Memory management: Revoke blob URLs on unmount or preview change
+  useEffect(() => {
+    return () => previewUrls.forEach(url => URL.revokeObjectURL(url));
+  }, [previewUrls]);
+
   if (!isOpen) return null;
 
-  // Handle file selection and generate local preview URLs
+  // Handles closing logic with event safety
+  const closeSelf = (e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation(); // Prevents event bubbling to parent containers
+    }
+    if (typeof setIsOpen === 'function') {
+      setIsOpen(false);
+    }
+  };
+
   const handleFileChange = (e) => {
     const files = Array.from(e.target.files);
     if (files.length + selectedFiles.length > 5) {
-      alert("You can only upload a maximum of 5 files.");
+      alert("Maximum 5 files allowed.");
       return;
     }
-    
     const newFiles = [...selectedFiles, ...files];
     setSelectedFiles(newFiles);
-
-    // Create blobs for local preview
-    const urls = newFiles.map(file => URL.createObjectURL(file));
-    setPreviewUrls(urls);
+    setPreviewUrls(newFiles.map(file => URL.createObjectURL(file)));
   };
 
-  const removeFile = (index) => {
+  const removeFile = (index, e) => {
+    e.stopPropagation();
     const newFiles = selectedFiles.filter((_, i) => i !== index);
-    const newUrls = previewUrls.filter((_, i) => i !== index);
     setSelectedFiles(newFiles);
-    setPreviewUrls(newUrls);
+    URL.revokeObjectURL(previewUrls[index]);
+    setPreviewUrls(previewUrls.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Package data as FormData
+    // Package data as FormData for Multer-based backend processing
     const formData = new FormData();
     formData.append("content", content);
-    
     selectedFiles.forEach((file) => {
-      formData.append("media", file); // Key must match upload.array("media")
+      formData.append("media", file); // Key matches backend upload.array("media")
     });
 
-    // Use .unwrap() to handle local state reset only on success
     try {
+      // Execute thunk and unwrap promise to handle UI reset on success
       await dispatch(addPost(formData)).unwrap();
       setContent("");
       setSelectedFiles([]);
       setPreviewUrls([]);
       setIsOpen(false);
     } catch (err) {
-      console.error("Upload failed:", err);
+      console.error("State Machine Error: Upload failed", err);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-start justify-center pt-24 bg-black/60 backdrop-blur-sm p-4">
-      <div className="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+    /* BACKDROP LAYER */
+    <div 
+      className="fixed inset-0 z-[100] flex items-start justify-center pt-24 bg-black/60 backdrop-blur-sm p-4"
+      onClick={closeSelf}
+    >
+      {/* MODAL CONTENT CONTAINER */}
+      <div 
+        className="bg-white w-full max-w-lg rounded-3xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200"
+        onClick={(e) => e.stopPropagation()} // Prevents clicks inside from closing modal
+      >
         <div className="flex justify-between items-center p-6 border-b">
           <h2 className="text-xl font-black text-gray-800">Share an Update</h2>
-          <button onClick={() => setIsOpen(false)} className="text-gray-400 hover:text-gray-900 transition-colors">✕</button>
+          
+          {/* FIX: Explicit type="button" prevents accidental form submission */}
+          <button 
+            type="button" 
+            onClick={closeSelf} 
+            className="text-gray-400 hover:text-gray-900 transition-colors text-2xl p-2 leading-none"
+          >
+            ✕
+          </button>
         </div>
         
         <form onSubmit={handleSubmit} className="p-6">
           <div className="flex items-center space-x-3 mb-4">
             <div className="w-12 h-12 bg-indigo-600 rounded-full flex items-center justify-center text-white font-black text-lg shadow-lg">
-              {user?.name[0]}
+              {user?.name?.[0]}
             </div>
             <div>
               <p className="font-bold text-gray-900">{user?.name}</p>
@@ -95,7 +128,7 @@ export default function CreatePostModal({ isOpen, setIsOpen }) {
                   <img src={url} className="w-full h-full object-cover" alt="preview" />
                   <button 
                     type="button"
-                    onClick={() => removeFile(index)}
+                    onClick={(e) => removeFile(index, e)}
                     className="absolute top-1 right-1 bg-black/50 text-white w-6 h-6 rounded-full text-xs opacity-0 group-hover:opacity-100 transition-opacity"
                   >✕</button>
                 </div>

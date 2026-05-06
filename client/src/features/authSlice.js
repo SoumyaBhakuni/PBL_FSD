@@ -9,8 +9,6 @@ const initialState = {
   user: null,
   token: tokenFromStorage || null,
   isAuthenticated: !!tokenFromStorage,
-  // 🛡️ CRITICAL FIX: If we have a token, we MUST start in a loading state 
-  // so the Router doesn't kick us to login before the DB responds!
   loading: !!tokenFromStorage, 
   error: null,
 };

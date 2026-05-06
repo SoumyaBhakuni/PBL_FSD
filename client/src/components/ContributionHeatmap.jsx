@@ -1,8 +1,9 @@
 import React from 'react';
 
-export default function ContributionHeatmap({ dates = [] }) {
-  // Normalize dates to YYYY-MM-DD
-  const activityMap = dates.reduce((acc, date) => {
+export default function ContributionHeatmap({ dates }) {
+  const safeDates = Array.isArray(dates) ? dates : [];
+
+  const activityMap = safeDates.reduce((acc, date) => {
     const d = new Date(date).toISOString().split('T')[0];
     acc[d] = (acc[d] || 0) + 1;
     return acc;
